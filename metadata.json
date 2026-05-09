@@ -1,0 +1,12 @@
+{
+  "name": "Titan Fleet",
+  "description": "Sistema industrial de gestão de frotas e manutenção preventiva com monitoramento em tempo real.",
+  "requestFramePermissions": [
+    "geolocation"
+  ],
+  "majorCapabilities": [
+    "Auth",
+    "Database",
+    "Real-time Monitoring"
+  ]
+}
