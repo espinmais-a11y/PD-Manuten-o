@@ -40,11 +40,11 @@ export function Dashboard() {
   async function fetchDashboardData() {
     if (!profile) return;
 
-    // Fetch last 12 months of data for charts
-    const twelveMonthsAgo = startOfMonth(subMonths(new Date(), 11));
+    // Otimização: Baixar APENAS dados do mês atual para evitar estouro de limite de leitura (redução de custos)
+    const startOfCurrentMonth = startOfMonth(new Date());
 
     let query = supabase.from('service_orders').select('*')
-      .gte('created_at', twelveMonthsAgo.toISOString());
+      .gte('created_at', startOfCurrentMonth.toISOString());
 
     const role = (profile?.role || '').toString().toLowerCase().trim();
 
@@ -87,36 +87,7 @@ export function Dashboard() {
     .filter(os => os.status === 'Maintenance Done' && !os.is_paid)
     .reduce((sum, os) => sum + (Number(os.work_hours || 0) * hourlyRate) + Number(os.total_value || 0), 0);
 
-  // Chart data: orders per month (last 6 months)
-  const chartData = useMemo(() => {
-    const months: { label: string; month: string; orders: number; value: number }[] = [];
-    
-    for (let i = 5; i >= 0; i--) {
-      const date = subMonths(new Date(), i);
-      const monthKey = format(date, 'yyyy-MM');
-      const monthLabel = format(date, 'MMM', { locale: ptBR }).toUpperCase();
-      
-      const monthOrders = allOrders.filter(os => {
-        const osMonth = format(parseISO(os.created_at), 'yyyy-MM');
-        return osMonth === monthKey;
-      });
-
-      const monthValue = monthOrders
-        .filter(os => os.status === 'Maintenance Done')
-        .reduce((sum, os) => sum + (Number(os.work_hours || 0) * hourlyRate) + Number(os.total_value || 0), 0);
-
-      months.push({
-        label: monthLabel,
-        month: monthKey,
-        orders: monthOrders.length,
-        value: monthValue
-      });
-    }
-    return months;
-  }, [allOrders, hourlyRate]);
-
-  const maxOrders = Math.max(...chartData.map(m => m.orders), 1);
-  const maxValue = Math.max(...chartData.map(m => m.value), 1);
+  // Removido: chartData, maxOrders e maxValue para economizar leituras e processamento.
 
   const isAdmin = profile?.role?.toString().toLowerCase().trim() === 'admin';
 
@@ -164,72 +135,7 @@ export function Dashboard() {
         )}
       </div>
 
-      {/* Charts Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* Orders per Month Chart */}
-        <div className="bg-[#1e2020] border border-[#444932] rounded-2xl shadow-xl overflow-hidden">
-          <div className="p-6 border-b border-[#444932] bg-[#282a2b] flex justify-between items-center">
-            <div className="flex items-center gap-2">
-              <BarChart3 size={16} className="text-[#caf300]" />
-              <h3 className="font-bold text-xs tracking-widest uppercase font-['JetBrains_Mono']">Ordens por Mês</h3>
-            </div>
-            <span className="text-[9px] text-[#c5c9ac] font-['JetBrains_Mono']">ÚLTIMOS 6 MESES</span>
-          </div>
-          <div className="p-6">
-            <div className="flex items-end justify-between gap-3 h-48">
-              {chartData.map((month, i) => (
-                <div key={month.month} className="flex-1 flex flex-col items-center gap-2">
-                  <span className="text-[10px] font-bold text-[#caf300] font-['JetBrains_Mono']">{month.orders}</span>
-                  <div className="w-full flex justify-center">
-                    <div 
-                      className="w-full max-w-[40px] bg-gradient-to-t from-[#caf300] to-[#caf300]/60 rounded-t-lg transition-all duration-700 hover:from-[#caf300] hover:to-[#caf300] cursor-pointer relative group"
-                      style={{ height: `${Math.max((month.orders / maxOrders) * 140, 4)}px` }}
-                    >
-                      <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-[#282a2b] border border-[#444932] px-2 py-1 rounded text-[8px] font-bold text-white opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
-                        {month.orders} OS
-                      </div>
-                    </div>
-                  </div>
-                  <span className="text-[9px] font-bold text-[#c5c9ac] font-['JetBrains_Mono']">{month.label}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* Service Value per Month Chart */}
-        <div className="bg-[#1e2020] border border-[#444932] rounded-2xl shadow-xl overflow-hidden">
-          <div className="p-6 border-b border-[#444932] bg-[#282a2b] flex justify-between items-center">
-            <div className="flex items-center gap-2">
-              <TrendingUp size={16} className="text-[#00bcd4]" />
-              <h3 className="font-bold text-xs tracking-widest uppercase font-['JetBrains_Mono']">Valor Serviço por Mês</h3>
-            </div>
-            <span className="text-[9px] text-[#c5c9ac] font-['JetBrains_Mono']">ÚLTIMOS 6 MESES</span>
-          </div>
-          <div className="p-6">
-            <div className="flex items-end justify-between gap-3 h-48">
-              {chartData.map((month, i) => (
-                <div key={month.month} className="flex-1 flex flex-col items-center gap-2">
-                  <span className="text-[9px] font-bold text-[#00bcd4] font-['JetBrains_Mono'] truncate max-w-full">
-                    {month.value > 0 ? `${(month.value / 1000).toFixed(1)}k` : '0'}
-                  </span>
-                  <div className="w-full flex justify-center">
-                    <div 
-                      className="w-full max-w-[40px] bg-gradient-to-t from-[#00bcd4] to-[#00bcd4]/60 rounded-t-lg transition-all duration-700 hover:from-[#00bcd4] hover:to-[#00bcd4] cursor-pointer relative group"
-                      style={{ height: `${Math.max((month.value / maxValue) * 140, 4)}px` }}
-                    >
-                      <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-[#282a2b] border border-[#444932] px-2 py-1 rounded text-[8px] font-bold text-white opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
-                        R$ {month.value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                      </div>
-                    </div>
-                  </div>
-                  <span className="text-[9px] font-bold text-[#c5c9ac] font-['JetBrains_Mono']">{month.label}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
+      {/* Gráficos removidos para economizar processamento e leituras de banco */}
 
       {/* Recent Orders */}
       <div className="bg-[#1e2020] border border-[#444932] rounded-2xl shadow-xl overflow-hidden">

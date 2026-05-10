@@ -198,6 +198,19 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
 
+-- Função auxiliar para verificar se é Funcionário
+CREATE OR REPLACE FUNCTION public.is_employee()
+RETURNS BOOLEAN AS $$
+DECLARE
+    is_emp BOOLEAN;
+BEGIN
+    SELECT (role = 'Employee') INTO is_emp
+    FROM public.profiles
+    WHERE id = auth.uid();
+    RETURN COALESCE(is_emp, FALSE);
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
+
 -- ==========================================
 -- TABELAS E RLS (Configuração Final Consolidada)
 -- ==========================================
@@ -253,25 +266,30 @@ CREATE POLICY "battery_admin_all" ON public.battery_types FOR ALL USING (public.
 CREATE POLICY "charger_public_select" ON public.charger_types FOR SELECT USING (true);
 CREATE POLICY "charger_admin_all" ON public.charger_types FOR ALL USING (public.is_admin());
 
--- Clientes: Visíveis a usuários logados, gerenciáveis por Admin
-CREATE POLICY "customers_select_auth" ON public.customers FOR SELECT USING (auth.uid() IS NOT NULL);
+-- Clientes: Admins e Funcionários vêem todos. Clientes vêem apenas seu próprio registro (via email).
+CREATE POLICY "customers_read_secure" ON public.customers 
+    FOR SELECT USING (public.is_admin() OR public.is_employee() OR contact_email = (auth.jwt()->>'email'));
 CREATE POLICY "customers_admin_all" ON public.customers FOR ALL USING (public.is_admin());
 
--- Máquinas: Visíveis a usuários logados, gerenciáveis por Admin
-CREATE POLICY "machines_select_auth" ON public.machines FOR SELECT USING (auth.uid() IS NOT NULL);
+-- Máquinas: Admins e Funcionários vêem todas. Clientes vêem apenas as suas.
+CREATE POLICY "machines_read_secure" ON public.machines 
+    FOR SELECT USING (public.is_admin() OR public.is_employee() OR customer_id IN (SELECT id FROM public.customers WHERE contact_email = (auth.jwt()->>'email')));
 CREATE POLICY "machines_admin_all" ON public.machines FOR ALL USING (public.is_admin());
 
 -- Ordens de Serviço:
 -- Admin vê tudo.
--- Funcionário vê as atribuídas a ele.
--- (No futuro, Clientes verão apenas as suas, mas por enquanto Admin e Atribuído cobre a necessidade)
+-- Funcionário vê as atribuídas a ele ou as não atribuídas.
+-- Cliente vê apenas as dele.
 CREATE POLICY "so_admin_all" ON public.service_orders FOR ALL USING (public.is_admin());
-CREATE POLICY "so_employee_assigned" ON public.service_orders 
-    FOR SELECT USING (employee_id = auth.uid());
+CREATE POLICY "so_read_employee_or_customer" ON public.service_orders 
+    FOR SELECT USING (
+        (public.is_employee() AND (employee_id = auth.uid() OR employee_id IS NULL))
+        OR customer_id IN (SELECT id FROM public.customers WHERE contact_email = (auth.jwt()->>'email'))
+    );
 
 -- used_parts: Segue a política da ordem de serviço pai
 CREATE POLICY "parts_select_so" ON public.used_parts 
-    FOR SELECT USING (EXISTS (SELECT 1 FROM public.service_orders WHERE id = service_order_id AND (employee_id = auth.uid() OR public.is_admin())));
+    FOR SELECT USING (EXISTS (SELECT 1 FROM public.service_orders WHERE id = service_order_id AND (employee_id = auth.uid() OR employee_id IS NULL OR public.is_admin() OR customer_id IN (SELECT id FROM public.customers WHERE contact_email = (auth.jwt()->>'email')))));
 CREATE POLICY "parts_admin_all" ON public.used_parts FOR ALL USING (public.is_admin());
 
 -- ==========================================

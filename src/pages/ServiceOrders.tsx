@@ -71,12 +71,16 @@ export function ServiceOrders() {
         query = query.eq('customer_id', customerFilter);
       }
 
-      // Date range filter
       if (dateStart) {
         query = query.gte('created_at', new Date(`${dateStart}T00:00:00`).toISOString());
       }
       if (dateEnd) {
         query = query.lte('created_at', new Date(`${dateEnd}T23:59:59`).toISOString());
+      }
+
+      // Otimização e Segurança: Trava de leitura caso os filtros de data estejam vazios
+      if (!dateStart && !dateEnd) {
+        query = query.limit(50);
       }
 
       const { data, error } = await query.order('created_at', { ascending: false });
