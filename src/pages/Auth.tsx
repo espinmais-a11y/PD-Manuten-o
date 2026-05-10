@@ -70,12 +70,12 @@ export function Auth() {
         
         <div className="p-8">
           <div className="flex flex-col items-center mb-8">
-            <div className="w-16 h-16 bg-[#caf300] flex items-center justify-center rounded-2xl mb-4 shadow-[0_0_20px_rgba(202,243,0,0.3)]">
-               <Forklift size={32} className="text-[#121414]" />
+            <div className="w-24 h-24 bg-[#121414] border border-[#caf300]/20 flex items-center justify-center rounded-2xl mb-4 shadow-[0_0_20px_rgba(202,243,0,0.1)] overflow-hidden">
+               <img src="/logo.png" alt="Logo" className="w-full h-full object-contain p-2 drop-shadow-[0_0_8px_rgba(202,243,0,0.4)]" />
             </div>
-            <h1 className="text-3xl font-black text-white tracking-tighter italic">PD MANUTENÇÃO</h1>
-            <p className="text-[#c5c9ac] font-['JetBrains_Mono'] text-[10px] tracking-widest uppercase mt-2">
-              Gestão de Manutenção Industrial
+            <h1 className="text-3xl font-black text-white tracking-tighter italic">PD EMPILHADEIRAS</h1>
+            <p className="text-[#c5c9ac] font-['JetBrains_Mono'] text-[10px] tracking-widest uppercase mt-2 text-center">
+              Locação e Manutenção
             </p>
           </div>
 

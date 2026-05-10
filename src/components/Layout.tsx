@@ -34,8 +34,13 @@ export function Layout() {
       {/* Desktop Sidebar */}
       <aside className="hidden md:flex flex-col w-64 border-r border-[#444932] bg-[#1e2020] m-4 mr-0 rounded-2xl overflow-hidden">
         <div className="p-6">
-          <h1 className="text-2xl font-bold text-[#caf300] tracking-tighter">PD MANUTENÇÃO</h1>
-          <p className="text-[10px] font-bold text-[#c5c9ac] tracking-[0.2em]">Empilhadeiras</p>
+          <div className="flex items-center gap-3">
+            <img src="/logo.png" alt="Logo" className="w-10 h-10 object-contain drop-shadow-[0_0_8px_rgba(202,243,0,0.4)]" />
+            <div>
+              <h1 className="text-xl font-bold text-[#caf300] tracking-tighter leading-tight">PD EMPILHADEIRAS</h1>
+              <p className="text-[9px] font-bold text-[#c5c9ac] tracking-[0.1em]">Locação e Manutenção</p>
+            </div>
+          </div>
         </div>
 
         <nav className="flex-1 px-3 space-y-1">
@@ -85,8 +90,9 @@ export function Layout() {
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* TopBar */}
         <header className="h-16 bg-[#121414] border-b-2 border-[#444932] flex items-center justify-between px-6 sticky top-0 z-10">
-          <div className="md:hidden flex items-center">
-             <h1 className="text-xl font-bold text-[#caf300]">PD MANUTENÇÃO</h1>
+          <div className="md:hidden flex items-center gap-2">
+             <img src="/logo.png" alt="Logo" className="w-8 h-8 object-contain" />
+             <h1 className="text-xl font-bold text-[#caf300] tracking-tighter">PD EMPILHADEIRAS</h1>
           </div>
           
           <div className="hidden md:flex items-center bg-[#0c0f0f] border border-[#444932] rounded-xl px-4 py-1.5 w-64">
