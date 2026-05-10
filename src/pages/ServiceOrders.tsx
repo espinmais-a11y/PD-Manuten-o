@@ -57,7 +57,7 @@ export function ServiceOrders() {
   async function fetchOrders() {
     try {
       setLoading(true);
-      let query = supabase.from('service_orders').select('*');
+      let query = supabase.from('service_orders').select('*, machines ( brand, model )');
       
       if (profile?.role === 'Employee' || profile?.role === 'employee') {
         query = query.eq('employee_id', profile.id);
@@ -337,9 +337,14 @@ export function ServiceOrders() {
              <div className="p-6 space-y-4 flex-1">
                 <div>
                    <h3 className="text-lg font-bold text-white tracking-tight leading-tight mb-1 uppercase">{os.title}</h3>
+                   {os.machines && (
+                     <p className="text-[10px] text-[#00bcd4] font-bold font-['JetBrains_Mono'] mb-1 tracking-widest uppercase">
+                       {os.machines.brand} {os.machines.model}
+                     </p>
+                   )}
                    <p className="text-xs text-[#c5c9ac]">{os.description || 'Sem descrição detalhada.'}</p>
                    {customerNameMap[os.customer_id] && (
-                     <p className="text-[10px] text-[#caf300] font-bold mt-1 uppercase">{customerNameMap[os.customer_id]}</p>
+                     <p className="text-[10px] text-[#caf300] font-bold mt-2 uppercase">{customerNameMap[os.customer_id]}</p>
                    )}
                 </div>
 
