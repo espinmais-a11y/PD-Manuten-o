@@ -63,7 +63,7 @@ export function Dashboard() {
     const { count: maintenanceCount } = await supabase
       .from('machines')
       .select('*', { count: 'exact', head: true })
-      .eq('status', 'EM MANUTENÇÃO');
+      .eq('status', 'Maintenance');
     setMachinesInMaintenance(maintenanceCount || 0);
 
     if (role === 'admin') {
