@@ -1,12 +1,14 @@
 import React from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Wrench, ClipboardList, Users, IndianRupee, LogOut, Settings, Bell, Search, Forklift, HardHat, RefreshCw } from 'lucide-react';
+import { LayoutDashboard, Wrench, ClipboardList, Users, Banknote, LogOut, Settings, Bell, Search, Forklift, HardHat, RefreshCw } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { clsx } from 'clsx';
 
 export function Layout() {
   const { profile, signOut, refreshProfile, loading } = useAuth();
   const navigate = useNavigate();
+
+  const isAdmin = profile?.role?.toString().toLowerCase().trim() === 'admin';
 
   const handleSignOut = async () => {
     await signOut();
@@ -22,9 +24,8 @@ export function Layout() {
     { to: '/os', icon: ClipboardList, label: 'ORDENS DE SERVIÇO' },
     { to: '/customers', icon: Users, label: 'CLIENTES' },
     { to: '/machines', icon: Forklift, label: 'FROTA' },
-    ...(profile?.role?.toString().toLowerCase().trim() === 'admin' ? [
-      { to: '/users', icon: HardHat, label: 'GESTÃO USUÁRIOS' },
-      { to: '/finance', icon: IndianRupee, label: 'PAINEL FINANCEIRO' },
+    ...(isAdmin ? [
+      { to: '/finance', icon: Banknote, label: 'PAINEL FINANCEIRO' },
     ] : []),
   ];
 
@@ -33,8 +34,8 @@ export function Layout() {
       {/* Desktop Sidebar */}
       <aside className="hidden md:flex flex-col w-64 border-r border-[#444932] bg-[#1e2020] m-4 mr-0 rounded-2xl overflow-hidden">
         <div className="p-6">
-          <h1 className="text-2xl font-bold text-[#caf300] tracking-tighter">FLEET CONTROL</h1>
-          <p className="text-[10px] font-bold text-[#c5c9ac] tracking-[0.2em]">WAREHOUSE ALPHA</p>
+          <h1 className="text-2xl font-bold text-[#caf300] tracking-tighter">PD MANUTENÇÃO</h1>
+          <p className="text-[10px] font-bold text-[#c5c9ac] tracking-[0.2em]">Empilhadeiras</p>
         </div>
 
         <nav className="flex-1 px-3 space-y-1">
@@ -85,7 +86,7 @@ export function Layout() {
         {/* TopBar */}
         <header className="h-16 bg-[#121414] border-b-2 border-[#444932] flex items-center justify-between px-6 sticky top-0 z-10">
           <div className="md:hidden flex items-center">
-             <h1 className="text-xl font-bold text-[#caf300]">TITAN FLEET</h1>
+             <h1 className="text-xl font-bold text-[#caf300]">PD MANUTENÇÃO</h1>
           </div>
           
           <div className="hidden md:flex items-center bg-[#0c0f0f] border border-[#444932] rounded-xl px-4 py-1.5 w-64">
@@ -101,9 +102,15 @@ export function Layout() {
             <button className="text-[#c5c9ac] hover:text-[#caf300]">
               <Bell size={20} />
             </button>
-            <button className="text-[#c5c9ac] hover:text-[#caf300]">
-              <Settings size={20} />
-            </button>
+            {isAdmin && (
+              <button 
+                onClick={() => navigate('/admin')}
+                className="text-[#c5c9ac] hover:text-[#caf300] transition-colors"
+                title="Painel Administrativo"
+              >
+                <Settings size={20} />
+              </button>
+            )}
           </div>
         </header>
 
@@ -128,6 +135,15 @@ export function Layout() {
                 {item.label.split(' ')[0]}
               </NavLink>
             ))}
+            {isAdmin && (
+              <button 
+                onClick={() => navigate('/admin')}
+                className="flex flex-col items-center gap-1 text-[8px] font-bold text-[#c5c9ac]"
+              >
+                <Settings size={20} />
+                ADMIN
+              </button>
+            )}
             <button onClick={handleSignOut} className="flex flex-col items-center gap-1 text-[8px] font-bold text-[#ffb4ab]">
               <LogOut size={20} />
               SAIR

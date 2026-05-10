@@ -73,7 +73,7 @@ export function Auth() {
             <div className="w-16 h-16 bg-[#caf300] flex items-center justify-center rounded-2xl mb-4 shadow-[0_0_20px_rgba(202,243,0,0.3)]">
                <Forklift size={32} className="text-[#121414]" />
             </div>
-            <h1 className="text-3xl font-black text-white tracking-tighter italic">TITAN FLEET</h1>
+            <h1 className="text-3xl font-black text-white tracking-tighter italic">PD MANUTENÇÃO</h1>
             <p className="text-[#c5c9ac] font-['JetBrains_Mono'] text-[10px] tracking-widest uppercase mt-2">
               Gestão de Manutenção Industrial
             </p>

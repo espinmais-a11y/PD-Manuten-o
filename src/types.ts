@@ -80,7 +80,7 @@ export interface Machine {
   created_at: string;
 }
 
-export type OSStatus = 'Pending' | 'In Route' | 'Executing' | 'Finished' | 'Cancelled';
+export type OSStatus = 'Pending' | 'In Route' | 'Executing' | 'Maintenance Done' | 'Cancelled';
 
 export interface ServiceOrder {
   id: string;
@@ -91,6 +91,7 @@ export interface ServiceOrder {
   description: string | null;
   problem_photo_url: string | null;
   hour_meter_at_service: number | null;
+  work_hours: number;
   status: OSStatus;
   check_in_at: string | null;
   check_in_lat: number | null;

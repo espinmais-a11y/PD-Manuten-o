@@ -34,7 +34,7 @@ export default function App() {
               
               {/* Admin Only */}
               <Route element={<AdminRoute />}>
-                <Route path="/users" element={<UserManagement />} />
+                <Route path="/admin" element={<UserManagement />} />
                 <Route path="/finance" element={<FinancialPanel />} />
               </Route>
             </Route>
