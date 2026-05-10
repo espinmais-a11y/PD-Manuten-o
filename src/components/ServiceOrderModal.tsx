@@ -363,7 +363,7 @@ export function ServiceOrderModal({ isOpen, onClose, onSuccess, editingOrder }: 
                 />
               </div>
 
-              <div className="p-6 bg-[#282a2b] border-t border-[#444932] flex gap-4 -mx-8 -mb-8 mt-auto sticky bottom-0">
+              <div className="p-6 bg-[#282a2b] border-t border-[#444932] flex gap-4 -mx-8 -mb-8 mt-8">
                 <button
                   type="button"
                   onClick={onClose}
