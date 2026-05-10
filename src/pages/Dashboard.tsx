@@ -31,6 +31,7 @@ export function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [hourlyRate, setHourlyRate] = useState(0);
+  const [machinesInMaintenance, setMachinesInMaintenance] = useState(0);
 
   useEffect(() => {
     fetchDashboardData();
@@ -57,6 +58,13 @@ export function Dashboard() {
       setAllOrders(osData);
       setRecentOs(osData.slice(0, 10));
     }
+
+    // Fetch machines in maintenance
+    const { count: maintenanceCount } = await supabase
+      .from('machines')
+      .select('*', { count: 'exact', head: true })
+      .eq('status', 'EM MANUTENÇÃO');
+    setMachinesInMaintenance(maintenanceCount || 0);
 
     if (role === 'admin') {
       // Fetch hourly rate
@@ -120,7 +128,7 @@ export function Dashboard() {
       </header>
 
       {/* Stats Cards */}
-      <div className={clsx("grid gap-6", isAdmin ? "grid-cols-1 md:grid-cols-3" : "grid-cols-1 md:grid-cols-2")}>
+      <div className={clsx("grid gap-6", isAdmin ? "grid-cols-1 md:grid-cols-2 lg:grid-cols-4" : "grid-cols-1 md:grid-cols-3")}>
         <StatCard 
           label="ORDENS ABERTAS" 
           value={`${openOrdersCount}`} 
@@ -128,6 +136,14 @@ export function Dashboard() {
           icon={ClipboardList}
           color="text-[#ffbf00]"
           onClick={() => navigate('/os')}
+        />
+        <StatCard 
+          label="FROTA EM MANUTENÇÃO" 
+          value={`${machinesInMaintenance}`} 
+          subtext="Equipamentos inoperantes"
+          icon={AlertTriangle}
+          color="text-[#ffb4ab]"
+          onClick={() => navigate('/machines')}
         />
         <StatCard 
           label="MANUTENÇÃO CONCLUÍDA" 

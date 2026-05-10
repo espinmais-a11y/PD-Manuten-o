@@ -330,6 +330,56 @@ CREATE TRIGGER on_auth_user_created
 -- DROP POLICY IF EXISTS "Admins can manage brands" ON brands;
 -- DROP POLICY IF EXISTS "Anyone can view models" ON models;
 -- DROP POLICY IF EXISTS "Admins can manage models" ON models;
--- DROP POLICY IF EXISTS "Users can view their own profile" ON profiles;
 -- DROP POLICY IF EXISTS "Admins can view and update all profiles" ON profiles;
 
+-- ==========================================
+-- TRIGGER: AUTOMATIC MACHINE STATUS UPDATE
+-- ==========================================
+CREATE OR REPLACE FUNCTION public.update_machine_status()
+RETURNS TRIGGER AS $$
+DECLARE
+    active_orders_count INTEGER;
+    target_machine_id UUID;
+BEGIN
+    IF (TG_OP = 'DELETE') THEN
+        target_machine_id := OLD.machine_id;
+    ELSE
+        target_machine_id := NEW.machine_id;
+    END IF;
+
+    SELECT count(*)
+    INTO active_orders_count
+    FROM public.service_orders
+    WHERE machine_id = target_machine_id
+      AND status IN ('Pending', 'In Route', 'Executing');
+
+    IF active_orders_count > 0 THEN
+        UPDATE public.machines SET status = 'EM MANUTENÇÃO' WHERE id = target_machine_id;
+    ELSE
+        UPDATE public.machines SET status = 'OPERACIONAL' WHERE id = target_machine_id;
+    END IF;
+
+    IF (TG_OP = 'UPDATE' AND OLD.machine_id != NEW.machine_id) THEN
+        SELECT count(*)
+        INTO active_orders_count
+        FROM public.service_orders
+        WHERE machine_id = OLD.machine_id
+          AND status IN ('Pending', 'In Route', 'Executing');
+
+        IF active_orders_count > 0 THEN
+            UPDATE public.machines SET status = 'EM MANUTENÇÃO' WHERE id = OLD.machine_id;
+        ELSE
+            UPDATE public.machines SET status = 'OPERACIONAL' WHERE id = OLD.machine_id;
+        END IF;
+    END IF;
+
+    RETURN NULL;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
+
+DROP TRIGGER IF EXISTS on_service_order_status_change ON public.service_orders;
+CREATE TRIGGER on_service_order_status_change
+    AFTER INSERT OR UPDATE OF status, machine_id OR DELETE
+    ON public.service_orders
+    FOR EACH ROW
+    EXECUTE PROCEDURE public.update_machine_status();
