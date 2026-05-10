@@ -66,14 +66,28 @@ export function UserManagement() {
     }
   }
 
-  async function toggleApproval(userId: string, currentStatus: boolean) {
+  async function toggleApproval(userId: string, currentStatus: boolean, newRole?: string) {
+    const updates: { is_approved: boolean; role?: string } = { is_approved: !currentStatus };
+    if (newRole) updates.role = newRole;
+
     const { error } = await supabase
       .from('profiles')
-      .update({ is_approved: !currentStatus })
+      .update(updates)
       .eq('id', userId);
 
     if (!error) {
-      setUsers(users.map(u => u.id === userId ? { ...u, is_approved: !currentStatus } : u));
+      setUsers(users.map(u => u.id === userId ? { ...u, ...updates } : u));
+    }
+  }
+
+  async function updateUserRole(userId: string, newRole: string) {
+    const { error } = await supabase
+      .from('profiles')
+      .update({ role: newRole })
+      .eq('id', userId);
+
+    if (!error) {
+      setUsers(users.map(u => u.id === userId ? { ...u, role: newRole } : u));
     }
   }
 
@@ -241,11 +255,17 @@ export function UserManagement() {
                         </div>
                      </div>
                   </td>
-                  <td className="px-6 py-4">
-                     <span className="text-[#c5c9ac] border border-[#444932] px-2 py-0.5 text-[10px] tracking-widest font-bold uppercase transition-all">
-                        {user.role === 'Admin' ? 'Administrador' : user.role === 'Employee' ? 'Técnico' : 'Cliente'}
-                     </span>
-                  </td>
+                   <td className="px-6 py-4">
+                      <select
+                        value={user.role || 'Client'}
+                        onChange={(e) => updateUserRole(user.id, e.target.value)}
+                        className="bg-[#0c0f0f] border border-[#444932] text-[10px] text-[#c5c9ac] px-2 py-1 tracking-widest font-bold uppercase focus:border-[#caf300] outline-none rounded cursor-pointer"
+                      >
+                        <option value="Client">Cliente</option>
+                        <option value="Employee">Técnico</option>
+                        <option value="Admin">Administrador</option>
+                      </select>
+                   </td>
                   <td className="px-6 py-4 text-[#c5c9ac]">
                      {new Date(user.created_at).toLocaleDateString('pt-BR')}
                   </td>
@@ -262,27 +282,52 @@ export function UserManagement() {
                         </div>
                      )}
                   </td>
-                  <td className="px-6 py-4 text-right flex items-center justify-end gap-2">
-                     <button 
-                       onClick={() => toggleApproval(user.id, user.is_approved)}
-                       className={clsx(
-                         "px-4 py-2 text-[10px] font-bold tracking-widest uppercase transition-all shadow-md active:scale-95 rounded-lg",
-                         user.is_approved 
-                          ? "bg-[#93000a] text-white hover:bg-[#690005]" 
-                          : "bg-[#caf300] text-[#121414] hover:brightness-110"
-                       )}
-                     >
-                        {user.is_approved ? 'REVOGAR' : 'APROVAR'}
-                     </button>
-
-                     <button 
-                       onClick={() => deleteUser(user.id)}
-                       className="p-2 text-[#ffb4ab] hover:bg-[#93000a]/20 hover:text-white transition-all rounded-lg"
-                       title="Excluir Usuário"
-                     >
-                        <Trash2 size={16} />
-                     </button>
-                  </td>
+                   <td className="px-6 py-4 text-right flex items-center justify-end gap-2">
+                      {user.is_approved ? (
+                        <>
+                          <button
+                            onClick={() => toggleApproval(user.id, user.is_approved)}
+                            className="px-4 py-2 text-[10px] font-bold tracking-widest uppercase transition-all shadow-md active:scale-95 rounded-lg bg-[#93000a] text-white hover:bg-[#690005]"
+                          >
+                            REVOGAR
+                          </button>
+                          <button
+                            onClick={() => deleteUser(user.id)}
+                            className="p-2 text-[#ffb4ab] hover:bg-[#93000a]/20 hover:text-white transition-all rounded-lg"
+                            title="Excluir Usuário"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </>
+                      ) : (
+                        <div className="flex items-center gap-2">
+                          <select
+                            id={`role-${user.id}`}
+                            className="bg-[#0c0f0f] border border-[#444932] text-[10px] text-[#c5c9ac] px-2 py-2 tracking-widest font-bold uppercase focus:border-[#caf300] outline-none rounded cursor-pointer"
+                          >
+                            <option value="Client">Cliente</option>
+                            <option value="Employee">Técnico</option>
+                            <option value="Admin">Administrador</option>
+                          </select>
+                          <button
+                            onClick={() => {
+                              const select = document.getElementById(`role-${user.id}`) as HTMLSelectElement;
+                              toggleApproval(user.id, user.is_approved, select.value);
+                            }}
+                            className="px-4 py-2 text-[10px] font-bold tracking-widest uppercase transition-all shadow-md active:scale-95 rounded-lg bg-[#caf300] text-[#121414] hover:brightness-110"
+                          >
+                            APROVAR
+                          </button>
+                          <button
+                            onClick={() => deleteUser(user.id)}
+                            className="p-2 text-[#ffb4ab] hover:bg-[#93000a]/20 hover:text-white transition-all rounded-lg"
+                            title="Excluir Usuário"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
+                      )}
+                   </td>
                 </tr>
               ))}
             </tbody>
