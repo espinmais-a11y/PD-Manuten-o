@@ -220,6 +220,19 @@ export function ServiceOrderModal({ isOpen, onClose, onSuccess, editingOrder, on
     e.preventDefault();
     if (loading || isReadOnly) return;
 
+    // Block finalization if no signature is saved
+    if (formData.status === 'Maintenance Done') {
+      if (!isEditing) {
+        setError('Não é possível criar uma OS diretamente concluída. Por favor, crie-a como pendente ou executando, realize o atendimento e colha a assinatura.');
+        return;
+      }
+      if (!hasSavedSignature && !editingOrder?.vibe_signature) {
+        setError('Não é possível finalizar a OS: a assinatura do cliente é obrigatória e deve ser salva na aba de Assinatura antes.');
+        setActiveTab('signature');
+        return;
+      }
+    }
+
     // Block finalization if preventive has pending items
     if (formData.status === 'Maintenance Done' && formData.is_preventive && editingOrder) {
       const hasPending = checklistItems.some(item => checklistAnswers[item.id] === 'pending');
