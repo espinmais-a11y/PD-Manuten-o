@@ -1,15 +1,34 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Wrench, ClipboardList, Users, Banknote, LogOut, Settings, Bell, Search, Forklift, HardHat, RefreshCw, Menu, X } from 'lucide-react';
+import { LayoutDashboard, Wrench, ClipboardList, Users, Banknote, LogOut, Settings, Bell, Search, Forklift, RefreshCw, Menu, X } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { supabase } from '../lib/supabase';
 import { clsx } from 'clsx';
 
 export function Layout() {
   const { profile, signOut, refreshProfile, loading } = useAuth();
   const navigate = useNavigate();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
+  const [pendingCount, setPendingCount] = useState(0);
 
   const isAdmin = profile?.role?.toString().toLowerCase().trim() === 'admin';
+
+  useEffect(() => {
+    if (isAdmin) {
+      fetchPendingCount();
+      // Poll a cada 60 segundos
+      const interval = setInterval(fetchPendingCount, 60000);
+      return () => clearInterval(interval);
+    }
+  }, [isAdmin]);
+
+  async function fetchPendingCount() {
+    const { count } = await supabase
+      .from('profiles')
+      .select('*', { count: 'exact', head: true })
+      .eq('is_approved', false);
+    setPendingCount(count || 0);
+  }
 
   const handleSignOut = async () => {
     await signOut();
@@ -51,9 +70,9 @@ export function Layout() {
               to={item.to}
               className={({ isActive }) =>
                 clsx(
-                  "flex items-center gap-3 px-4 py-3 text-xs font-bold font-['JetBrains_Mono'] tracking-widest transition-all",
+                  "flex items-center gap-3 px-4 py-3 text-xs font-bold font-['JetBrains_Mono'] tracking-widest transition-all rounded-lg",
                   isActive
-                    ? "text-[#121414] bg-[#caf300] border-l-4 border-white"
+                    ? "text-[#121414] bg-[#caf300]"
                     : "text-[#c5c9ac] hover:bg-[#333535] hover:text-[#caf300]"
                 )
               }
@@ -62,6 +81,27 @@ export function Layout() {
               {item.label}
             </NavLink>
           ))}
+          {isAdmin && (
+            <NavLink
+              to="/admin"
+              className={({ isActive }) =>
+                clsx(
+                  "flex items-center gap-3 px-4 py-3 text-xs font-bold font-['JetBrains_Mono'] tracking-widest transition-all rounded-lg relative",
+                  isActive
+                    ? "text-[#121414] bg-[#caf300]"
+                    : "text-[#c5c9ac] hover:bg-[#333535] hover:text-[#caf300]"
+                )
+              }
+            >
+              <Settings size={18} />
+              ADMINISTRAÇÃO
+              {pendingCount > 0 && (
+                <span className="ml-auto bg-[#ffbf00] text-[#121414] text-[8px] font-black px-1.5 py-0.5 rounded-full min-w-[18px] text-center animate-pulse">
+                  {pendingCount}
+                </span>
+              )}
+            </NavLink>
+          )}
         </nav>
 
         <div className="p-6 border-t border-[#444932] flex items-center gap-3">
@@ -71,7 +111,7 @@ export function Layout() {
           <div className="flex-1 min-w-0">
             <p className="text-xs font-bold font-['JetBrains_Mono'] truncate uppercase">{profile?.full_name}</p>
             <p className="text-[10px] text-[#c5c9ac] uppercase flex items-center gap-2">
-              {profile?.role}
+              {profile?.role === 'Admin' ? 'Administrador' : profile?.role === 'Employee' ? 'Técnico' : profile?.role}
               <button 
                 onClick={handleRefresh}
                 className="hover:text-[#caf300] transition-colors p-1"
@@ -90,13 +130,13 @@ export function Layout() {
       {/* Main Content */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden relative">
         {/* TopBar */}
-        <header className="h-16 bg-[#121414] border-b-2 border-[#444932] flex items-center justify-between px-4 md:px-6 sticky top-0 z-50">
+        <header className="h-14 md:h-16 bg-[#121414] border-b-2 border-[#444932] flex items-center justify-between px-4 md:px-6 sticky top-0 z-50">
           <div className="md:hidden flex items-center gap-2">
              <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="text-[#caf300] p-1">
                {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
              </button>
-             <img src="/logo.png" alt="Logo" className="w-8 h-8 object-contain" />
-             <h1 className="text-lg font-bold text-[#caf300] tracking-tighter truncate max-w-[150px]">PD EMPILHADEIRAS</h1>
+             <img src="/logo.png" alt="Logo" className="w-7 h-7 object-contain" />
+             <h1 className="text-base font-bold text-[#caf300] tracking-tighter truncate max-w-[140px]">PD EMPILHADEIRAS</h1>
           </div>
           
           <div className="hidden md:flex items-center bg-[#0c0f0f] border border-[#444932] rounded-xl px-4 py-1.5 w-64">
@@ -108,17 +148,22 @@ export function Layout() {
             />
           </div>
 
-          <div className="flex items-center gap-4">
-            <button className="text-[#c5c9ac] hover:text-[#caf300]">
-              <Bell size={20} />
+          <div className="flex items-center gap-3 md:gap-4">
+            <button className="text-[#c5c9ac] hover:text-[#caf300] relative">
+              <Bell size={18} />
             </button>
             {isAdmin && (
               <button 
                 onClick={() => navigate('/admin')}
-                className="text-[#c5c9ac] hover:text-[#caf300] transition-colors"
+                className="text-[#c5c9ac] hover:text-[#caf300] transition-colors relative"
                 title="Painel Administrativo"
               >
-                <Settings size={20} />
+                <Settings size={18} />
+                {pendingCount > 0 && (
+                  <span className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-[#ffbf00] text-[#121414] text-[8px] font-black rounded-full flex items-center justify-center animate-pulse">
+                    {pendingCount}
+                  </span>
+                )}
               </button>
             )}
           </div>
@@ -126,8 +171,8 @@ export function Layout() {
 
         {/* Mobile Sidebar Overlay */}
         {isMobileMenuOpen && (
-          <div className="md:hidden absolute top-16 inset-x-0 bottom-0 bg-[#121414] z-40 overflow-y-auto">
-            <nav className="flex flex-col p-4 space-y-2">
+          <div className="md:hidden absolute top-14 inset-x-0 bottom-0 bg-[#121414] z-40 overflow-y-auto">
+            <nav className="flex flex-col p-4 space-y-1">
               {navItems.map((item) => (
                 <NavLink
                   key={item.to}
@@ -142,7 +187,7 @@ export function Layout() {
                     )
                   }
                 >
-                  <item.icon size={24} />
+                  <item.icon size={22} />
                   {item.label}
                 </NavLink>
               ))}
@@ -151,15 +196,20 @@ export function Layout() {
                   onClick={() => { navigate('/admin'); setIsMobileMenuOpen(false); }}
                   className="flex items-center gap-3 px-4 py-4 rounded-xl text-sm font-bold font-['JetBrains_Mono'] tracking-widest text-[#c5c9ac] hover:bg-[#333535] hover:text-[#caf300] transition-all w-full text-left"
                 >
-                  <Settings size={24} />
+                  <Settings size={22} />
                   ADMINISTRAÇÃO
+                  {pendingCount > 0 && (
+                    <span className="ml-auto bg-[#ffbf00] text-[#121414] text-[9px] font-black px-2 py-0.5 rounded-full animate-pulse">
+                      {pendingCount} pendente{pendingCount > 1 ? 's' : ''}
+                    </span>
+                  )}
                 </button>
               )}
               <button 
                 onClick={handleSignOut} 
-                className="flex items-center gap-3 px-4 py-4 rounded-xl text-sm font-bold font-['JetBrains_Mono'] tracking-widest text-[#ffb4ab] hover:bg-[#333535] transition-all w-full text-left"
+                className="flex items-center gap-3 px-4 py-4 rounded-xl text-sm font-bold font-['JetBrains_Mono'] tracking-widest text-[#ffb4ab] hover:bg-[#333535] transition-all w-full text-left mt-4"
               >
-                <LogOut size={24} />
+                <LogOut size={22} />
                 SAIR
               </button>
             </nav>

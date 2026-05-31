@@ -310,13 +310,20 @@ export function ServiceOrders() {
           const isConcluded = os.status === 'Maintenance Done';
           return (
           <div key={os.id} className="bg-[#1e2020] border border-[#444932] flex flex-col shadow-xl rounded-2xl overflow-hidden group hover:border-[#caf300]/50 transition-all">
-             <div className="p-4 border-b border-[#444932] bg-[#282a2b] flex justify-between items-start">
-                <span className={clsx(
-                  "px-2 py-1 text-[8px] font-black tracking-[0.2em] rounded",
-                  badge.bg
-                )}>
-                  {badge.label}
-                </span>
+              <div className="p-4 border-b border-[#444932] bg-[#282a2b] flex justify-between items-start">
+                <div className="flex flex-wrap gap-1.5 items-center">
+                  <span className={clsx(
+                    "px-2 py-1 text-[8px] font-black tracking-[0.2em] rounded",
+                    badge.bg
+                  )}>
+                    {badge.label}
+                  </span>
+                  {os.is_preventive && (
+                    <span className="px-2 py-1 text-[8px] font-black tracking-[0.2em] rounded bg-purple-500/20 text-purple-400 border border-purple-500/30 font-bold uppercase">
+                      PREVENTIVA
+                    </span>
+                  )}
+                </div>
                 <div className="flex items-center gap-2">
                   <span className="text-[10px] font-['JetBrains_Mono'] text-[#c5c9ac]">OS #{os.id.slice(0, 8)}</span>
                   <button 
@@ -379,12 +386,20 @@ export function ServiceOrders() {
                 )}
 
                 {(profile?.role === 'Employee' || profile?.role === 'employee') && os.status === 'Executing' && (
-                  <button 
-                    onClick={() => handleCheckOut(os.id)}
-                    className="w-full bg-[#ffbf00] text-[#121414] py-3 text-[10px] font-black tracking-widest flex items-center justify-center gap-2 hover:brightness-110 active:scale-[0.98] rounded-xl shadow-lg"
-                  >
-                    <CheckCircle2 size={14} /> FINALIZAR SERVIÇO (CHECK-OUT)
-                  </button>
+                  <div className="flex flex-col gap-2">
+                    <button 
+                      onClick={() => handleEdit(os)}
+                      className="w-full bg-[#caf300] text-[#121414] py-2.5 text-[10px] font-black tracking-widest flex items-center justify-center gap-2 hover:brightness-110 active:scale-[0.98] rounded-xl shadow-lg uppercase"
+                    >
+                      <Wrench size={14} /> ENTRAR E EDITAR OS
+                    </button>
+                    <button 
+                      onClick={() => handleCheckOut(os.id)}
+                      className="w-full bg-[#333535] text-white border border-[#444932] py-2.5 text-[10px] font-bold tracking-widest flex items-center justify-center gap-2 hover:bg-[#444932] active:scale-[0.98] rounded-xl transition-all uppercase"
+                    >
+                      <CheckCircle2 size={14} /> FINALIZAR SERVIÇO (CHECK-OUT)
+                    </button>
+                  </div>
                 )}
 
                 {os.status === 'Maintenance Done' && (

@@ -103,6 +103,8 @@ export interface ServiceOrder {
   technical_notes: string | null;
   total_value: number;
   is_paid: boolean;
+  is_preventive?: boolean;
+  created_by?: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -113,5 +115,31 @@ export interface UsedPart {
   part_name: string;
   quantity: number;
   unit_price: number;
+  created_at: string;
+}
+
+export interface ChecklistItem {
+  id: string;
+  label: string;
+  display_order: number;
+  is_active: boolean;
+  created_by: string | null;
+  created_at: string;
+}
+
+export interface ChecklistAnswer {
+  id: string;
+  service_order_id: string;
+  item_id: string;
+  answer: 'ok' | 'pending';
+  answered_by: string | null;
+  answered_at: string;
+}
+
+export interface ServiceOrderPhoto {
+  id: string;
+  service_order_id: string;
+  photo_url: string;
+  uploaded_by: string | null;
   created_at: string;
 }

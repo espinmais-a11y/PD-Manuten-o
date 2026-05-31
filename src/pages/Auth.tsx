@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { useNavigate } from 'react-router-dom';
 import { Forklift, Loader2 } from 'lucide-react';
-import { UserRole } from '../types';
+
 
 export function Auth() {
   const [isLogin, setIsLogin] = useState(true);
@@ -10,7 +10,7 @@ export function Auth() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
-  const [role, setRole] = useState<UserRole>('Customer');
+
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
 
@@ -30,7 +30,7 @@ export function Auth() {
           options: {
             data: {
               full_name: fullName,
-              role: role,
+              role: 'Employee',
             }
           }
         });
@@ -93,17 +93,7 @@ export function Auth() {
                     placeholder="EX: ROBERTO ALENCAR"
                   />
                 </div>
-                <div className="space-y-1">
-                  <label className="text-[10px] font-bold text-[#8f9378] tracking-widest uppercase">CATEGORIA</label>
-                  <select
-                    value={role}
-                    onChange={(e) => setRole(e.target.value as UserRole)}
-                    className="w-full bg-[#0c0f0f] border border-[#444932] p-3 text-white focus:border-[#caf300] outline-none transition-all appearance-none rounded-xl"
-                  >
-                    <option value="Customer">CLIENTE</option>
-                    <option value="Employee">FUNCIONÁRIO / TÉCNICO</option>
-                  </select>
-                </div>
+
               </>
             )}
 
