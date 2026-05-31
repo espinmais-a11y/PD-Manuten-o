@@ -74,12 +74,13 @@ export function ServiceOrderModal({ isOpen, onClose, onSuccess, editingOrder, on
   const [isDrawing, setIsDrawing] = useState(false);
   const [hasSavedSignature, setHasSavedSignature] = useState(false);
   const [savingSignature, setSavingSignature] = useState(false);
+  const [signatureDataUrl, setSignatureDataUrl] = useState<string | null>(null);
   const lastPos = useRef<{ x: number; y: number } | null>(null);
 
   // Determine which tabs to show
   const showPreventiveTab = formData.is_preventive || editingOrder?.is_preventive;
   const showPhotosTab = isEditing;
-  const showSignatureTab = isEditing && (isExecuting || isReadOnly);
+  const showSignatureTab = true;
 
   const tabs: { id: TabId; label: string; icon: React.ElementType; show: boolean }[] = [
     { id: 'info', label: 'Info', icon: Info, show: true },
@@ -112,6 +113,10 @@ export function ServiceOrderModal({ isOpen, onClose, onSuccess, editingOrder, on
         fetchPhotos(editingOrder.id);
         if (editingOrder.vibe_signature) {
           setHasSavedSignature(true);
+          setSignatureDataUrl(editingOrder.vibe_signature);
+        } else {
+          setHasSavedSignature(false);
+          setSignatureDataUrl(null);
         }
         if (editingOrder.created_by) {
           fetchCreatorName(editingOrder.created_by);
@@ -121,6 +126,7 @@ export function ServiceOrderModal({ isOpen, onClose, onSuccess, editingOrder, on
         setChecklistAnswers({});
         setPhotos([]);
         setHasSavedSignature(false);
+        setSignatureDataUrl(null);
         setCreatorName(null);
       }
     }
@@ -137,7 +143,7 @@ export function ServiceOrderModal({ isOpen, onClose, onSuccess, editingOrder, on
 
   // Load signature if exists
   useEffect(() => {
-    if (activeTab === 'signature' && editingOrder?.vibe_signature && canvasRef.current) {
+    if (activeTab === 'signature' && signatureDataUrl && canvasRef.current) {
       const img = new Image();
       img.onload = () => {
         const ctx = canvasRef.current?.getContext('2d');
@@ -146,9 +152,9 @@ export function ServiceOrderModal({ isOpen, onClose, onSuccess, editingOrder, on
           ctx.drawImage(img, 0, 0);
         }
       };
-      img.src = editingOrder.vibe_signature;
+      img.src = signatureDataUrl;
     }
-  }, [activeTab, editingOrder?.vibe_signature]);
+  }, [activeTab, signatureDataUrl]);
 
   async function fetchInitialData() {
     try {
@@ -222,12 +228,8 @@ export function ServiceOrderModal({ isOpen, onClose, onSuccess, editingOrder, on
 
     // Block finalization if no signature is saved
     if (formData.status === 'Maintenance Done') {
-      if (!isEditing) {
-        setError('Não é possível criar uma OS diretamente concluída. Por favor, crie-a como pendente ou executando, realize o atendimento e colha a assinatura.');
-        return;
-      }
-      if (!hasSavedSignature && !editingOrder?.vibe_signature) {
-        setError('Não é possível finalizar a OS: a assinatura do cliente é obrigatória e deve ser salva na aba de Assinatura antes.');
+      if (!signatureDataUrl) {
+        setError('A assinatura não foi realizada. Por favor, salve a assinatura na aba de Assinatura antes de alterar o status para "Manutenção Concluída".');
         setActiveTab('signature');
         return;
       }
@@ -261,6 +263,7 @@ export function ServiceOrderModal({ isOpen, onClose, onSuccess, editingOrder, on
         status: formData.status,
         work_hours: formData.work_hours || 0,
         is_preventive: formData.is_preventive,
+        vibe_signature: signatureDataUrl,
         updated_at: new Date().toISOString(),
       };
 
@@ -474,19 +477,26 @@ export function ServiceOrderModal({ isOpen, onClose, onSuccess, editingOrder, on
     if (!canvasRef.current) return;
     const ctx = canvasRef.current.getContext('2d');
     ctx?.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
+    setSignatureDataUrl(null);
+    setHasSavedSignature(false);
   };
 
   async function saveSignature() {
-    if (!editingOrder || !canvasRef.current) return;
+    if (!canvasRef.current) return;
     setSavingSignature(true);
     try {
       const dataUrl = canvasRef.current.toDataURL('image/png');
-      const { error } = await supabase.from('service_orders').update({
-        vibe_signature: dataUrl,
-        updated_at: new Date().toISOString(),
-      }).eq('id', editingOrder.id);
-      if (error) throw error;
+      setSignatureDataUrl(dataUrl);
       setHasSavedSignature(true);
+
+      if (isEditing && editingOrder) {
+        const { error } = await supabase.from('service_orders').update({
+          vibe_signature: dataUrl,
+          updated_at: new Date().toISOString(),
+        }).eq('id', editingOrder.id);
+        if (error) throw error;
+      }
+      
       setSuccessMsg('Assinatura salva com sucesso!');
       setTimeout(() => setSuccessMsg(null), 3000);
     } catch (err: any) {
