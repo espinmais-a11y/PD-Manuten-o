@@ -75,6 +75,7 @@ CREATE POLICY "checklist_items_admin" ON public.preventive_checklist_items FOR A
 -- Checklist answers: técnico e admin
 DROP POLICY IF EXISTS "checklist_answers_read" ON public.preventive_checklist_answers;
 DROP POLICY IF EXISTS "checklist_answers_write" ON public.preventive_checklist_answers;
+DROP POLICY IF EXISTS "checklist_answers_update" ON public.preventive_checklist_answers;
 DROP POLICY IF EXISTS "checklist_answers_admin" ON public.preventive_checklist_answers;
 CREATE POLICY "checklist_answers_read" ON public.preventive_checklist_answers FOR SELECT USING (public.is_admin() OR public.is_employee());
 CREATE POLICY "checklist_answers_write" ON public.preventive_checklist_answers FOR INSERT WITH CHECK (public.is_admin() OR public.is_employee());
